@@ -14,11 +14,18 @@
 
   var firData = [{
     id: "#2024-0001",
-    complainant: "dummyuser",
-    mobile: "9876543210",
+    complainant: "Rahul Sharma",
+    mobile: "+91 98765 43210",
+    aadhaar: "XXXX-XXXX-3421",
+    email: "rahul@gmail.com",
+    address: "12, Gandhi Nagar, Patna",
     type: "Theft",
     status: "Under Investigation",
     dateStr: "15 Mar 2024",
+    datetime: "2024-03-15T09:00",
+    location: "Kankarbagh Market, Patna",
+    description: "My mobile phone (iPhone 14, Black) and cash of ₹15,000 was stolen at Kankarbagh market while I was shopping. Two individuals on a motorcycle snatched my bag and fled towards Boring Road. I could identify one of them as wearing a red jacket. CCTV footage may be available from nearby shops.",
+    policeStation: "East District Police Station",
     officer: "Rajesh Kumar",
     badge: "badge-gold"
   }];
@@ -30,6 +37,199 @@
 
   function generateFirId() {
     return "#2024-" + (1000 + firData.length).toString().padStart(4, '0');
+  }
+
+  var currentCaptcha = '';
+
+  function initCaptcha() {
+    var canvas = document.getElementById('captcha-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var code = '';
+    for (var i = 0; i < 5; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    currentCaptcha = code;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f2f4f7';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid lines for noise
+    for (var n = 0; n < 5; n++) {
+      ctx.strokeStyle = 'rgba(' + Math.floor(Math.random() * 120) + ',' + Math.floor(Math.random() * 120) + ',' + Math.floor(Math.random() * 120) + ', 0.25)';
+      ctx.lineWidth = 1 + Math.random();
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.stroke();
+    }
+
+    ctx.font = 'bold 20px "Outfit", "Courier New", sans-serif';
+    ctx.textBaseline = 'middle';
+
+    for (var t = 0; t < code.length; t++) {
+      var char = code.charAt(t);
+      var x = 15 + t * 22 + Math.random() * 3;
+      var y = canvas.height / 2 + (Math.random() * 8 - 4);
+      var angle = (Math.random() * 24 - 12) * Math.PI / 180;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillStyle = 'rgb(' + Math.floor(Math.random() * 80) + ',' + Math.floor(Math.random() * 80) + ',' + Math.floor(Math.random() * 120) + ')';
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+    }
+
+    // Add some noise dots
+    for (var d = 0; d < 25; d++) {
+      ctx.fillStyle = 'rgba(' + Math.floor(Math.random() * 150) + ',' + Math.floor(Math.random() * 150) + ',' + Math.floor(Math.random() * 150) + ', 0.4)';
+      ctx.beginPath();
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 0.8 + Math.random() * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    var captchaInp = document.getElementById('login-captcha');
+    if (captchaInp) {
+      captchaInp.value = currentCaptcha;
+    }
+  }
+
+  function togglePasswordView() {
+    var passInp = document.getElementById('login-pass');
+    var eyeSpan = document.getElementById('password-toggle-eye');
+    if (!passInp || !eyeSpan) return;
+    if (passInp.type === 'password') {
+      passInp.type = 'text';
+      eyeSpan.textContent = '🙈';
+    } else {
+      passInp.type = 'password';
+      eyeSpan.textContent = '👁';
+    }
+  }
+
+  function maskName(name) {
+    if (!name) return 'N/A';
+    var parts = name.split(' ');
+    var maskedParts = parts.map(function(part) {
+      if (part.length <= 2) {
+        return part.charAt(0) + '*'.repeat(part.length - 1);
+      }
+      return part.charAt(0) + '*'.repeat(part.length - 2) + part.charAt(part.length - 1);
+    });
+    return maskedParts.join(' ');
+  }
+
+  function getTimelineHtml(status, dateStr, officer, policeStation) {
+    var steps = [
+      { title: "FIR Filed", date: dateStr, note: "FIR accepted at " + (policeStation || "Local District Police Station"), key: "Filed" },
+      { title: "Assigned to Officer", date: dateStr, note: "Assigned to " + (officer !== "Unassigned" ? officer : "Investigating Officer"), key: "Assigned" },
+      { title: "Under Investigation", date: "Active", note: "Evidence collection and investigation in progress.", key: "Under Investigation" },
+      { title: "In Court", date: "Pending hearing", note: "Chargesheet prepared and submitted to court.", key: "In Court" },
+      { title: "Case Closed", date: "Resolved", note: "Final report approved and case closed.", key: "Resolved" }
+    ];
+
+    var activeIndex = 0;
+    if (status === "Filed") {
+      activeIndex = 0;
+    } else if (status === "Under Investigation") {
+      activeIndex = 2;
+    } else if (status === "In Court") {
+      activeIndex = 3;
+    } else if (status === "Resolved" || status.includes("Close")) {
+      activeIndex = 4;
+    } else {
+      activeIndex = 1;
+    }
+
+    var html = '<div class="timeline">';
+    for (var i = 0; i < steps.length; i++) {
+      var step = steps[i];
+      var dotClass = 'pending';
+      var lineStyle = '';
+      
+      if (i < activeIndex) {
+        dotClass = 'done';
+      } else if (i === activeIndex) {
+        dotClass = 'active';
+      }
+
+      if (i < activeIndex) {
+        lineStyle = 'background: var(--green);';
+      } else if (i === activeIndex && i < steps.length - 1) {
+        lineStyle = 'background: var(--gray-mid);';
+      } else {
+        lineStyle = 'background: var(--gray-mid);';
+      }
+
+      var showLine = i < steps.length - 1;
+      
+      html += '<div class="tl-step">' +
+              '  <div class="tl-col">' +
+              '    <div class="tl-dot ' + dotClass + '"></div>' +
+              (showLine ? '    <div class="tl-line" style="' + lineStyle + '"></div>' : '') +
+              '  </div>' +
+              '  <div class="tl-body">' +
+              '    <div class="tl-title">' + step.title + '</div>' +
+              '    <div class="tl-date">' + (i <= activeIndex ? step.date : 'Pending') + '</div>' +
+              (i <= activeIndex ? '    <div class="tl-note">' + step.note + '</div>' : '') +
+              '  </div>' +
+              '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function trackFIR() {
+    var firInput = document.getElementById('quick-track-input');
+    if (!firInput) return;
+    var query = firInput.value.trim();
+    if (!query) {
+      alert("Please enter a valid FIR Number.");
+      return;
+    }
+
+    var found = firData.find(function(f) {
+      return f.id.toLowerCase() === query.toLowerCase();
+    });
+
+    var modal = document.getElementById('quick-track-modal');
+    var modalBody = document.getElementById('track-modal-body');
+    if (!modal || !modalBody) return;
+
+    if (found) {
+      var maskedComplainant = maskName(found.complainant);
+      var detailsHtml = 
+        '<div class="modal-detail-card">' +
+        '  <div class="modal-detail-title">FIR Details - ' + found.id + '</div>' +
+        '  <div style="font-size: 12px; line-height: 1.6; color: var(--text);">' +
+        '    <strong>Complainant:</strong> ' + maskedComplainant + '<br>' +
+        '    <strong>Type of Offense:</strong> ' + found.type + '<br>' +
+        '    <strong>Incident Date:</strong> ' + found.dateStr + '<br>' +
+        '    <strong>Police Jurisdiction:</strong> ' + (found.policeStation || 'East District Police Station') + '<br>' +
+        '    <strong>Current Status:</strong> <span class="badge ' + found.badge + '">' + found.status + '</span>' +
+        '  </div>' +
+        '</div>' +
+        '<div style="margin-top: 15px;">' +
+        '  <div style="font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 10px;">Investigation Timeline</div>' +
+        getTimelineHtml(found.status, found.dateStr, found.officer, found.policeStation) +
+        '</div>';
+
+      modalBody.innerHTML = detailsHtml;
+      modal.style.display = 'flex';
+    } else {
+      alert("No record found for FIR Number: " + query + ". Please check the format and try again.");
+    }
+  }
+
+  function closeTrackModal() {
+    var modal = document.getElementById('quick-track-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
   }
 
   function selectRole(r) {
@@ -44,14 +244,30 @@
         userInp.value = r + '123';
         passInp.value = 'password';
     }
+    if (!currentCaptcha) {
+      initCaptcha();
+    } else {
+      var captchaInp = document.getElementById('login-captcha');
+      if (captchaInp) {
+        captchaInp.value = currentCaptcha;
+      }
+    }
   }
 
   function doLogin() {
     var u = document.getElementById('login-user').value;
     var p = document.getElementById('login-pass').value;
+    var cap = document.getElementById('login-captcha').value;
+
+    if (cap.toLowerCase() !== currentCaptcha.toLowerCase()) {
+      alert("Invalid captcha code. Please check and try again.");
+      initCaptcha();
+      return;
+    }
 
     if (!registeredUsers[u] || registeredUsers[u].password !== p || registeredUsers[u].role !== currentRole) {
       alert("Invalid login credentials for the selected role. Please check your mobile/username, password, and chosen role.");
+      initCaptcha();
       return;
     }
     
@@ -65,9 +281,14 @@
     document.getElementById('user-badge').style.display = 'flex';
     document.getElementById('nav-tabs').style.display = 'flex';
 
+    // Show top-bar on login
+    var topBar = document.getElementById('top-bar-main');
+    if (topBar) topBar.style.display = 'block';
+
     document.getElementById('tab-file-fir').style.display = currentRole === 'citizen' ? 'block' : 'none';
     document.getElementById('tab-officers').style.display = currentRole === 'admin' ? 'block' : 'none';
-    document.getElementById('tab-analytics').style.display = currentRole !== 'citizen' ? 'block' : 'none';
+    document.getElementById('tab-analytics').style.display = (currentRole === 'officer' || currentRole === 'admin') ? 'block' : 'none';
+    document.getElementById('tab-fir-list').style.display = (currentRole === 'court' || currentRole === 'admin') ? 'none' : 'block';
 
     document.getElementById('btn-file-fir-top').style.display = currentRole === 'citizen' ? 'inline-block' : 'none';
     document.getElementById('officer-action-card').style.display = currentRole === 'citizen' ? 'none' : 'block';
@@ -78,11 +299,13 @@
 
     showScreen('dashboard', null);
     document.getElementById('screen-login').style.display = 'none';
+    var launcher = document.getElementById('ai-chat-launcher');
+    if (launcher) launcher.style.display = 'none';
 
     var dId = document.getElementById('dash-citizen');
     var oId = document.getElementById('dash-officer');
     var aId = document.getElementById('dash-admin');
-    var cId = document.getElementById('dash-court'); // Added court reference
+    var cId = document.getElementById('dash-court');
     dId.style.display = 'none'; oId.style.display = 'none'; aId.style.display = 'none';
     if (cId) cId.style.display = 'none';
 
@@ -97,10 +320,21 @@
   function logout() {
     document.getElementById('user-badge').style.display = 'none';
     document.getElementById('nav-tabs').style.display = 'none';
+
+    // Hide top-bar on logout
+    var topBar = document.getElementById('top-bar-main');
+    if (topBar) topBar.style.display = 'none';
+
     document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); s.style.display = ''; });
     document.getElementById('screen-login').style.display = 'block';
     document.getElementById('screen-login').classList.add('active');
+    var launcher = document.getElementById('ai-chat-launcher');
+    if (launcher) launcher.style.display = 'block';
     currentRole = 'admin';
+
+    // Regenerate captcha on logout
+    initCaptcha();
+
     ['citizen','officer','court','admin'].forEach(function(x) { document.getElementById('r-'+x).classList.remove('selected'); });
     document.getElementById('fir-success').style.display = 'none';
   }
@@ -128,10 +362,36 @@
   }
 
   function showFirSuccess() {
-    var nam = document.getElementById('fir-input-name') ? document.getElementById('fir-input-name').value : 'Citizen';
-    var mob = document.getElementById('fir-input-mobile') ? document.getElementById('fir-input-mobile').value : 'N/A';
-    var typ = document.getElementById('fir-input-type') ? document.getElementById('fir-input-type').value : 'Other';
+    var nameEl = document.getElementById('fir-input-name');
+    var mobileEl = document.getElementById('fir-input-mobile');
+    var aadhaarEl = document.getElementById('fir-input-aadhaar');
+    var emailEl = document.getElementById('fir-input-email');
+    var addressEl = document.getElementById('fir-input-address');
     
+    var typeEl = document.getElementById('fir-input-type');
+    var datetimeEl = document.getElementById('fir-input-datetime');
+    var locationEl = document.getElementById('fir-input-location');
+    var descEl = document.getElementById('fir-input-desc');
+    var psEl = document.getElementById('fir-input-ps');
+
+    var ps = psEl ? psEl.value.trim() : '';
+    if (!ps) {
+      alert("Please select a Police Station.");
+      if (psEl) psEl.focus();
+      return;
+    }
+
+    var nam = nameEl && nameEl.value.trim() ? nameEl.value.trim() : 'Citizen';
+    var mob = mobileEl && mobileEl.value.trim() ? mobileEl.value.trim() : 'N/A';
+    var aadhaar = aadhaarEl && aadhaarEl.value.trim() ? aadhaarEl.value.trim() : 'XXXX-XXXX-XXXX';
+    var email = emailEl && emailEl.value.trim() ? emailEl.value.trim() : '';
+    var address = addressEl && addressEl.value.trim() ? addressEl.value.trim() : 'N/A';
+    
+    var typ = typeEl ? typeEl.value : 'Other';
+    var datetime = datetimeEl ? datetimeEl.value : '';
+    var loc = locationEl && locationEl.value.trim() ? locationEl.value.trim() : 'N/A';
+    var desc = descEl && descEl.value.trim() ? descEl.value.trim() : 'No description provided.';
+
     var newId = generateFirId();
     var d = new Date();
     var dateStr = d.getDate() + ' ' + d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear();
@@ -140,7 +400,14 @@
       id: newId,
       complainant: nam,
       mobile: mob,
+      aadhaar: aadhaar,
+      email: email,
+      address: address,
       type: typ,
+      datetime: datetime,
+      location: loc,
+      description: desc,
+      policeStation: ps,
       status: "Filed",
       dateStr: dateStr,
       officer: "Unassigned",
@@ -156,6 +423,18 @@
     document.getElementById('fir-success').style.display = 'block';
     document.getElementById('fir-success').scrollIntoView({ behavior: 'smooth' });
     
+    // Clear inputs
+    if (nameEl) nameEl.value = '';
+    if (mobileEl) mobileEl.value = '';
+    if (aadhaarEl) aadhaarEl.value = '';
+    if (emailEl) emailEl.value = '';
+    if (addressEl) addressEl.value = '';
+    if (typeEl) typeEl.selectedIndex = 0;
+    if (datetimeEl) datetimeEl.value = '';
+    if (locationEl) locationEl.value = '';
+    if (descEl) descEl.value = '';
+    if (psEl) psEl.value = '';
+
     renderApp();
   }
 
@@ -224,10 +503,69 @@
               '<td>'+f.dateStr+'</td>' +
               '<td>'+f.officer+'</td>' +
               '<td><span class="badge '+f.badge+'">'+f.status+'</span></td>' +
-              '<td><button class="btn btn-secondary btn-sm" onclick="showScreen(\'fir-detail\',null)">View</button></td>' +
+              '<td><button class="btn btn-secondary btn-sm" onclick="viewFirDetail(\''+f.id+'\')">View</button></td>' +
               '</tr>';
     });
     tbody.innerHTML = html;
+  }
+
+  function viewFirDetail(id) {
+    var found = firData.find(function(f) { return f.id === id; });
+    if (!found) return;
+
+    // Update screen-fir-detail title and subtitle
+    var titleEl = document.getElementById('detail-title');
+    if (titleEl) titleEl.textContent = 'FIR ' + found.id + ' · ' + found.type;
+
+    var subEl = document.getElementById('detail-sub');
+    if (subEl) {
+      subEl.textContent = 'Filed: ' + found.dateStr + ' · ' + (found.policeStation || 'East District Police Station');
+    }
+
+    var statusEl = document.getElementById('detail-status');
+    if (statusEl) {
+      statusEl.textContent = found.status;
+      statusEl.className = 'badge ' + found.badge;
+    }
+
+    // Complainant Details
+    var compNameEl = document.getElementById('detail-comp-name');
+    if (compNameEl) compNameEl.textContent = found.complainant || 'N/A';
+
+    var compMobileEl = document.getElementById('detail-comp-mobile');
+    if (compMobileEl) compMobileEl.textContent = found.mobile || 'N/A';
+
+    var compAadhaarEl = document.getElementById('detail-comp-aadhaar');
+    if (compAadhaarEl) compAadhaarEl.textContent = found.aadhaar || 'XXXX-XXXX-XXXX';
+
+    var compAddressEl = document.getElementById('detail-comp-address');
+    if (compAddressEl) compAddressEl.textContent = found.address || 'N/A';
+
+    // Incident Details
+    var incTypeEl = document.getElementById('detail-inc-type');
+    if (incTypeEl) incTypeEl.textContent = found.type;
+
+    var incLocEl = document.getElementById('detail-inc-loc');
+    if (incLocEl) incLocEl.textContent = found.location || 'N/A';
+
+    var incDateEl = document.getElementById('detail-inc-date');
+    if (incDateEl) {
+      if (found.datetime) {
+        if (found.datetime.includes('T')) {
+          var dt = new Date(found.datetime);
+          incDateEl.textContent = dt.toLocaleString('default', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } else {
+          incDateEl.textContent = found.datetime;
+        }
+      } else {
+        incDateEl.textContent = found.dateStr;
+      }
+    }
+
+    var incDescEl = document.getElementById('detail-inc-desc');
+    if (incDescEl) incDescEl.textContent = found.description || 'No description provided.';
+
+    showScreen('fir-detail', null);
   }
 
   function renderNotifications() {
@@ -366,3 +704,274 @@
   }
 
   selectRole('admin');
+
+  // ================= NyayaMitra AI Chat Assistant Functions =================
+
+  function openAIChat() {
+    var screenLogin = document.getElementById('screen-login');
+    var screenAIChat = document.getElementById('screen-ai-chat');
+    var launcher = document.getElementById('ai-chat-launcher');
+    
+    if (screenLogin) {
+      screenLogin.classList.remove('active');
+      screenLogin.style.display = 'none';
+    }
+    if (screenAIChat) {
+      screenAIChat.classList.add('active');
+      screenAIChat.style.display = 'block';
+    }
+    if (launcher) {
+      launcher.style.display = 'none';
+    }
+    
+    // Scroll messages to bottom on open
+    var messagesContainer = document.getElementById('ai-chat-messages');
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  }
+
+  function closeAIChat() {
+    var screenLogin = document.getElementById('screen-login');
+    var screenAIChat = document.getElementById('screen-ai-chat');
+    var launcher = document.getElementById('ai-chat-launcher');
+    
+    if (screenAIChat) {
+      screenAIChat.classList.remove('active');
+      screenAIChat.style.display = 'none';
+    }
+    if (screenLogin) {
+      screenLogin.classList.add('active');
+      screenLogin.style.display = 'block';
+    }
+    if (launcher) {
+      launcher.style.display = 'block';
+    }
+    
+    // Close plus menu if open
+    var popup = document.getElementById('ai-attachments-popup');
+    if (popup) {
+      popup.style.display = 'none';
+    }
+  }
+
+  function toggleAIPlusMenu() {
+    var popup = document.getElementById('ai-attachments-popup');
+    if (!popup) return;
+    if (popup.style.display === 'none' || popup.style.display === '') {
+      popup.style.display = 'flex';
+    } else {
+      popup.style.display = 'none';
+    }
+  }
+
+  function handleAIAttachment(type) {
+    var popup = document.getElementById('ai-attachments-popup');
+    if (popup) popup.style.display = 'none';
+    
+    var messagesContainer = document.getElementById('ai-chat-messages');
+    if (!messagesContainer) return;
+    
+    var d = new Date();
+    var hours = d.getHours();
+    var minutes = d.getMinutes();
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    var timeStr = hours + ':' + minutes + ' ' + ampm;
+    
+    var attachmentText = '';
+    var botConfirmText = '';
+    
+    if (type === 'Camera') {
+      attachmentText = '📸 Photo captured: incident_snapshot_temp.png';
+      botConfirmText = 'I\'ve received the captured image. I will include this visual evidence in your mock complaint draft. What details should we add next?';
+    } else if (type === 'Image') {
+      attachmentText = '🖼 Image attached: evidence_image.jpg';
+      botConfirmText = 'Evidence image attached successfully. I have analyzed the metadata and queued it for the portal upload. Please provide details of the complaint.';
+    } else if (type === 'Media') {
+      attachmentText = '📁 Document uploaded: incident_report.pdf';
+      botConfirmText = 'Legal document/media file uploaded. I will reference this attachment in your case details. What else can you tell me about the incident?';
+    } else if (type === 'Location') {
+      attachmentText = '📍 Location shared: Lat 25.5941, Lon 85.1376 (Patna, Bihar)';
+      botConfirmText = 'Location details shared successfully. This will map the case jurisdiction to the East District Police Station. Please describe the incident.';
+    }
+    
+    // Add user attachment message bubble
+    var userMsgHtml = 
+      '<div class="ai-msg ai-msg-user">' +
+      '  <div class="ai-msg-avatar">👤</div>' +
+      '  <div class="ai-msg-bubble">' +
+      '    <div class="ai-msg-sender">You</div>' +
+      '    <div class="ai-msg-text">' +
+      '      <div class="ai-attach-bubble">' +
+      '        <span class="ai-attach-icon">📎</span>' +
+      '        <span>' + attachmentText + '</span>' +
+      '      </div>' +
+      '    </div>' +
+      '    <div class="ai-msg-time">' + timeStr + '</div>' +
+      '  </div>' +
+      '</div>';
+      
+    messagesContainer.insertAdjacentHTML('beforeend', userMsgHtml);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Show typing indicator
+    var typingIndicator = document.getElementById('ai-typing-indicator');
+    if (typingIndicator) {
+      typingIndicator.style.display = 'flex';
+      messagesContainer.appendChild(typingIndicator);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Delay and respond
+    setTimeout(function() {
+      if (typingIndicator) typingIndicator.style.display = 'none';
+      
+      var botMsgHtml = 
+        '<div class="ai-msg ai-msg-bot">' +
+        '  <div class="ai-msg-avatar">🤖</div>' +
+        '  <div class="ai-msg-bubble">' +
+        '    <div class="ai-msg-sender">NyayaMitra AI</div>' +
+        '    <div class="ai-msg-text">' + botConfirmText + '</div>' +
+        '    <div class="ai-msg-time">' + timeStr + '</div>' +
+        '  </div>' +
+        '</div>';
+        
+      messagesContainer.insertAdjacentHTML('beforeend', botMsgHtml);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 1200);
+  }
+
+  function sendAIMessage() {
+    var inputEl = document.getElementById('ai-chat-input-text');
+    if (!inputEl) return;
+    var userText = inputEl.value.trim();
+    if (!userText) return;
+    
+    var messagesContainer = document.getElementById('ai-chat-messages');
+    if (!messagesContainer) return;
+    
+    var d = new Date();
+    var hours = d.getHours();
+    var minutes = d.getMinutes();
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    var timeStr = hours + ':' + minutes + ' ' + ampm;
+    
+    // Add user message bubble
+    var userMsgHtml = 
+      '<div class="ai-msg ai-msg-user">' +
+      '  <div class="ai-msg-avatar">👤</div>' +
+      '  <div class="ai-msg-bubble">' +
+      '    <div class="ai-msg-sender">You</div>' +
+      '    <div class="ai-msg-text">' + userText + '</div>' +
+      '    <div class="ai-msg-time">' + timeStr + '</div>' +
+      '  </div>' +
+      '</div>';
+      
+    messagesContainer.insertAdjacentHTML('beforeend', userMsgHtml);
+    inputEl.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Show typing indicator
+    var typingIndicator = document.getElementById('ai-typing-indicator');
+    if (typingIndicator) {
+      typingIndicator.style.display = 'flex';
+      messagesContainer.appendChild(typingIndicator);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Determine reply based on query
+    var reply = '';
+    var textLower = userText.toLowerCase();
+    
+    if (textLower.indexOf('fir') !== -1 || textLower.indexOf('complaint') !== -1 || textLower.indexOf('file') !== -1) {
+      reply = "Under Indian Law, a First Information Report (FIR) can be filed by any person who has knowledge of a cognizable offense. You can file it digitally on our Citizen dashboard (by logging in as a citizen and navigating to the 'File FIR' tab) or by visiting the nearest police station. There is no charge for filing an FIR, and you are legally entitled to receive a copy of it free of cost.";
+    } else if (textLower.indexOf('right') !== -1 || textLower.indexOf('ipc') !== -1 || textLower.indexOf('law') !== -1) {
+      reply = "Every citizen has crucial rights when interacting with the law enforcement agencies under the IPC and CrPC: 1) The right to get a free copy of the FIR immediately; 2) The right to safety and dignity during custody; 3) The right of women to be questioned only in the presence of women officers and not after sunset or before sunrise; 4) The right to know the status of the investigation updates from the portal.";
+    } else if (textLower.indexOf('cyber') !== -1 || textLower.indexOf('online fraud') !== -1 || textLower.indexOf('scam') !== -1) {
+      reply = "To report cybercrimes (such as online financial fraud, identity theft, or social media harassment), please keep screenshots, transaction receipts, bank statements, and relevant URLs handy. You can file an official complaint online at cybercrime.gov.in, or select 'Cybercrime' as the incident type in our 'File New FIR' form on this portal.";
+    } else if (textLower.indexOf('status') !== -1 || textLower.indexOf('track') !== -1 || textLower.indexOf('where') !== -1) {
+      reply = "To track the progress of an active case or FIR, you can use the 'Track Your FIR' widget on our portal's main landing page by entering the FIR ID (e.g., #2024-0001). Alternatively, log in to your Citizen dashboard to view interactive timelines, case officers assigned, and investigator notes.";
+    } else {
+      reply = "Jai Hind! I have received your query. NyayaMitra is here to guide you on Indian legal procedures, FIR registration steps, and case tracking. Could you please specify if your query is regarding filing an FIR, checking status, or understanding citizen rights?";
+    }
+    
+    // Delay and respond
+    setTimeout(function() {
+      if (typingIndicator) typingIndicator.style.display = 'none';
+      
+      var botMsgHtml = 
+        '<div class="ai-msg ai-msg-bot">' +
+        '  <div class="ai-msg-avatar">🤖</div>' +
+        '  <div class="ai-msg-bubble">' +
+        '    <div class="ai-msg-sender">NyayaMitra AI</div>' +
+        '    <div class="ai-msg-text">' + reply + '</div>' +
+        '    <div class="ai-msg-time">' + timeStr + '</div>' +
+        '  </div>' +
+        '</div>';
+        
+      messagesContainer.insertAdjacentHTML('beforeend', botMsgHtml);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 1200);
+  }
+
+  var isAIVoiceRecording = false;
+  var aiVoiceTimeout = null;
+
+  function toggleAIVoiceRecording() {
+    var inputEl = document.getElementById('ai-chat-input-text');
+    var wavesEl = document.getElementById('ai-chat-voice-waves');
+    var micBtn = document.getElementById('ai-chat-voice-btn');
+    if (!inputEl || !wavesEl || !micBtn) return;
+    
+    if (!isAIVoiceRecording) {
+      // Start recording simulation
+      isAIVoiceRecording = true;
+      inputEl.style.display = 'none';
+      wavesEl.style.display = 'flex';
+      micBtn.classList.add('active');
+      
+      // Auto transcribe after 3 seconds
+      aiVoiceTimeout = setTimeout(function() {
+        stopAIVoiceRecording(true);
+      }, 3000);
+    } else {
+      // Cancel recording simulation
+      stopAIVoiceRecording(false);
+    }
+  }
+
+  function stopAIVoiceRecording(autoFillText) {
+    var inputEl = document.getElementById('ai-chat-input-text');
+    var wavesEl = document.getElementById('ai-chat-voice-waves');
+    var micBtn = document.getElementById('ai-chat-voice-btn');
+    if (!inputEl || !wavesEl || !micBtn) return;
+    
+    isAIVoiceRecording = false;
+    if (aiVoiceTimeout) {
+      clearTimeout(aiVoiceTimeout);
+      aiVoiceTimeout = null;
+    }
+    
+    wavesEl.style.display = 'none';
+    inputEl.style.display = 'block';
+    micBtn.classList.remove('active');
+    
+    if (autoFillText) {
+      // List of mock speech utterances
+      var mockPhrases = [
+        "How can I file a cybercrime complaint online?",
+        "What are my basic rights when filing an FIR?",
+        "How can I track the status of my registered FIR?",
+        "What documents are required to register a theft complaint?"
+      ];
+      var randomPhrase = mockPhrases[Math.floor(Math.random() * mockPhrases.length)];
+      inputEl.value = randomPhrase;
+      inputEl.focus();
+    }
+  }
