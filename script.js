@@ -5,6 +5,7 @@
     "admin123": { password: "password", name: "Arvind Kumar IPS", role: "admin" }
   };
   var currentRole = 'admin';
+  var isLoggedIn = false;
   var roleData = {
     citizen: { name: 'Rahul Sharma', initials: 'RS', role: 'Citizen' },
     officer: { name: 'Rajesh Kumar', initials: 'RK', role: 'Inspector · East District' },
@@ -12,23 +13,62 @@
     admin: { name: 'Arvind Kumar IPS', initials: 'AK', role: 'Superintendent of Police' }
   };
 
-  var firData = [{
-    id: "#2024-0001",
-    complainant: "Rahul Sharma",
-    mobile: "+91 98765 43210",
-    aadhaar: "XXXX-XXXX-3421",
-    email: "rahul@gmail.com",
-    address: "12, Gandhi Nagar, Patna",
-    type: "Theft",
-    status: "Under Investigation",
-    dateStr: "15 Mar 2024",
-    datetime: "2024-03-15T09:00",
-    location: "Kankarbagh Market, Patna",
-    description: "My mobile phone (iPhone 14, Black) and cash of ₹15,000 was stolen at Kankarbagh market while I was shopping. Two individuals on a motorcycle snatched my bag and fled towards Boring Road. I could identify one of them as wearing a red jacket. CCTV footage may be available from nearby shops.",
-    policeStation: "East District Police Station",
-    officer: "Rajesh Kumar",
-    badge: "badge-gold"
-  }];
+  var firData = [
+    {
+      id: "#2024-0001",
+      complainant: "Rahul Sharma",
+      mobile: "+91 98765 43210",
+      aadhaar: "XXXX-XXXX-3421",
+      email: "rahul@gmail.com",
+      address: "12, Gandhi Nagar, Patna",
+      type: "Theft",
+      status: "Under Investigation",
+      dateStr: "15 Mar 2024",
+      datetime: "2024-03-15T09:00",
+      location: "Kankarbagh Market, Patna",
+      description: "My mobile phone (iPhone 14, Black) and cash of ₹15,000 was stolen at Kankarbagh market while I was shopping. Two individuals on a motorcycle snatched my bag and fled towards Boring Road. I could identify one of them as wearing a red jacket. CCTV footage may be available from nearby shops.",
+      policeStation: "East District Police Station",
+      officer: "Rajesh Kumar",
+      badge: "badge-gold",
+      priority: "Medium"
+    },
+    {
+      id: "#2024-0002",
+      complainant: "Rahul Sharma",
+      mobile: "+91 98765 43210",
+      aadhaar: "XXXX-XXXX-3421",
+      email: "rahul@gmail.com",
+      address: "12, Gandhi Nagar, Patna",
+      type: "Cybercrime",
+      status: "Filed",
+      dateStr: "20 Mar 2024",
+      datetime: "2024-03-20T11:30",
+      location: "Online",
+      description: "Received a phishing link on WhatsApp and lost money.",
+      policeStation: "East District Police Station",
+      officer: "Unassigned",
+      badge: "badge-gray",
+      priority: "High"
+    },
+    {
+      id: "#2024-0003",
+      complainant: "Rahul Sharma",
+      mobile: "+91 98765 43210",
+      aadhaar: "XXXX-XXXX-3421",
+      email: "rahul@gmail.com",
+      address: "12, Gandhi Nagar, Patna",
+      type: "Assault",
+      status: "Resolved",
+      dateStr: "10 Mar 2024",
+      datetime: "2024-03-10T18:45",
+      location: "Boring Road, Patna",
+      description: "Physical altercation in public.",
+      policeStation: "East District Police Station",
+      officer: "Rajesh Kumar",
+      badge: "badge-green",
+      priority: "Low"
+    }
+  ];
 
   var notificationsData = [{
     text: "Your FIR #2024-0001 status updated to <strong>Under Investigation</strong>. Officer Rajesh Kumar has been assigned.",
@@ -254,6 +294,65 @@
     }
   }
 
+  function setupUserUI(u, r) {
+    currentRole = r;
+    document.body.className = 'role-' + r;
+    roleData[r].name = registeredUsers[u].name;
+
+    var d = roleData[r];
+    document.getElementById('top-name').textContent = d.name;
+    var nameParts = d.name.split(' ');
+    var initials = nameParts[0].charAt(0).toUpperCase() + (nameParts.length > 1 ? nameParts[1].charAt(0).toUpperCase() : '');
+    document.getElementById('top-avatar').textContent = initials;
+    document.getElementById('user-badge').style.display = 'flex';
+    document.getElementById('nav-tabs').style.display = 'flex';
+
+    // Show top-bar on login
+    var topBar = document.getElementById('top-bar-main');
+    if (topBar) topBar.style.display = 'block';
+
+    var logoPortalSub = document.getElementById('logo-portal-sub');
+    if (logoPortalSub) {
+      if (r === 'citizen') {
+        logoPortalSub.textContent = 'Citizen Portal';
+      } else if (r === 'officer') {
+        logoPortalSub.textContent = 'Officer Portal';
+      } else if (r === 'court') {
+        logoPortalSub.textContent = 'Court Portal';
+      } else if (r === 'admin') {
+        logoPortalSub.textContent = 'Admin Portal';
+      }
+    }
+
+    document.getElementById('tab-file-fir').style.display = r === 'citizen' ? 'block' : 'none';
+    document.getElementById('tab-officers').style.display = r === 'admin' ? 'block' : 'none';
+    document.getElementById('tab-analytics').style.display = (r === 'officer' || r === 'admin') ? 'block' : 'none';
+    document.getElementById('tab-fir-list').style.display = (r === 'court' || r === 'admin') ? 'none' : 'block';
+
+    document.getElementById('btn-file-fir-top').style.display = r === 'citizen' ? 'inline-block' : 'none';
+    document.getElementById('officer-action-card').style.display = r === 'citizen' ? 'none' : 'block';
+
+    document.getElementById('screen-login').style.display = 'none';
+    var launcher = document.getElementById('ai-chat-launcher');
+    if (launcher) {
+      launcher.style.display = (r === 'citizen') ? 'block' : 'none';
+    }
+
+    var dId = document.getElementById('dash-citizen');
+    var oId = document.getElementById('dash-officer');
+    var aId = document.getElementById('dash-admin');
+    var cId = document.getElementById('dash-court');
+    dId.style.display = 'none'; oId.style.display = 'none'; aId.style.display = 'none';
+    if (cId) cId.style.display = 'none';
+
+    if (r === 'citizen') dId.style.display = 'block';
+    else if (r === 'officer') oId.style.display = 'block';
+    else if (r === 'court' && cId) cId.style.display = 'block';
+    else aId.style.display = 'block';
+
+    renderApp();
+  }
+
   function doLogin() {
     var u = document.getElementById('login-user').value;
     var p = document.getElementById('login-pass').value;
@@ -271,53 +370,27 @@
       return;
     }
     
-    roleData[currentRole].name = registeredUsers[u].name;
+    isLoggedIn = true;
+    sessionStorage.setItem('isLoggedIn', 'true');
+    sessionStorage.setItem('currentUser', u);
+    sessionStorage.setItem('currentRole', currentRole);
 
-    var d = roleData[currentRole];
-    document.getElementById('top-name').textContent = d.name;
-    var nameParts = d.name.split(' ');
-    var initials = nameParts[0].charAt(0).toUpperCase() + (nameParts.length > 1 ? nameParts[1].charAt(0).toUpperCase() : '');
-    document.getElementById('top-avatar').textContent = initials;
-    document.getElementById('user-badge').style.display = 'flex';
-    document.getElementById('nav-tabs').style.display = 'flex';
+    setupUserUI(u, currentRole);
 
-    // Show top-bar on login
-    var topBar = document.getElementById('top-bar-main');
-    if (topBar) topBar.style.display = 'block';
-
-    document.getElementById('tab-file-fir').style.display = currentRole === 'citizen' ? 'block' : 'none';
-    document.getElementById('tab-officers').style.display = currentRole === 'admin' ? 'block' : 'none';
-    document.getElementById('tab-analytics').style.display = (currentRole === 'officer' || currentRole === 'admin') ? 'block' : 'none';
-    document.getElementById('tab-fir-list').style.display = (currentRole === 'court' || currentRole === 'admin') ? 'none' : 'block';
-
-    document.getElementById('btn-file-fir-top').style.display = currentRole === 'citizen' ? 'inline-block' : 'none';
-    document.getElementById('officer-action-card').style.display = currentRole === 'citizen' ? 'none' : 'block';
-
-    var tabs = document.querySelectorAll('.nav-tab');
-    tabs.forEach(function(t) { t.classList.remove('active'); });
-    tabs[0].classList.add('active');
-
-    showScreen('dashboard', null);
-    document.getElementById('screen-login').style.display = 'none';
-    var launcher = document.getElementById('ai-chat-launcher');
-    if (launcher) launcher.style.display = 'none';
-
-    var dId = document.getElementById('dash-citizen');
-    var oId = document.getElementById('dash-officer');
-    var aId = document.getElementById('dash-admin');
-    var cId = document.getElementById('dash-court');
-    dId.style.display = 'none'; oId.style.display = 'none'; aId.style.display = 'none';
-    if (cId) cId.style.display = 'none';
-
-    if (currentRole === 'citizen') dId.style.display = 'block';
-    else if (currentRole === 'officer') oId.style.display = 'block';
-    else if (currentRole === 'court' && cId) cId.style.display = 'block';
-    else aId.style.display = 'block';
-
-    renderApp();
+    window.location.hash = 'dashboard';
   }
 
   function logout() {
+    window.location.hash = 'login';
+  }
+
+  function logoutInternal() {
+    isLoggedIn = false;
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('currentUser');
+    sessionStorage.removeItem('currentRole');
+
+    document.body.className = '';
     document.getElementById('user-badge').style.display = 'none';
     document.getElementById('nav-tabs').style.display = 'none';
 
@@ -340,13 +413,47 @@
   }
 
   function showScreen(name, tabEl) {
-    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    window.location.hash = name;
+  }
+
+  function showScreenInternal(name, tabEl) {
+    if (isLoggedIn) {
+      var topBar = document.getElementById('top-bar-main');
+      if (topBar) topBar.style.display = 'block';
+      var navTabs = document.getElementById('nav-tabs');
+      if (navTabs) navTabs.style.display = 'flex';
+      
+      var launcher = document.getElementById('ai-chat-launcher');
+      if (launcher) {
+        launcher.style.display = (currentRole === 'citizen') ? 'block' : 'none';
+      }
+    }
+
+    document.querySelectorAll('.screen').forEach(function(s) {
+      s.classList.remove('active');
+      s.style.display = '';
+    });
+
     var el = document.getElementById('screen-'+name);
     if (el) el.classList.add('active');
     if (tabEl) {
       document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
       tabEl.classList.add('active');
+    } else {
+      var autoTab = findTabElement(name);
+      if (autoTab) {
+        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+        autoTab.classList.add('active');
+      }
     }
+  }
+
+  function showLoginInternal() {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); s.style.display = ''; });
+    document.getElementById('screen-login').style.display = 'block';
+    document.getElementById('screen-login').classList.add('active');
+    var launcher = document.getElementById('ai-chat-launcher');
+    if (launcher) launcher.style.display = 'block';
   }
 
   function switchTab(ns, tab, el) {
@@ -391,6 +498,8 @@
     var datetime = datetimeEl ? datetimeEl.value : '';
     var loc = locationEl && locationEl.value.trim() ? locationEl.value.trim() : 'N/A';
     var desc = descEl && descEl.value.trim() ? descEl.value.trim() : 'No description provided.';
+    var priorityEl = document.getElementById('fir-input-priority');
+    var pri = priorityEl ? priorityEl.value : 'Medium';
 
     var newId = generateFirId();
     var d = new Date();
@@ -411,7 +520,8 @@
       status: "Filed",
       dateStr: dateStr,
       officer: "Unassigned",
-      badge: "badge-gray"
+      badge: "badge-gray",
+      priority: pri
     };
 
     firData.push(obj);
@@ -434,6 +544,7 @@
     if (locationEl) locationEl.value = '';
     if (descEl) descEl.value = '';
     if (psEl) psEl.value = '';
+    if (priorityEl) priorityEl.value = 'Medium';
 
     renderApp();
   }
@@ -453,7 +564,7 @@
     if(!statTot) return;
 
     var currentUserStr = (currentRole === 'citizen') ? document.getElementById('top-name').textContent : null;
-    var myFirs = currentRole === 'citizen' ? firData.filter(function(f) { return f.complainant === currentUserStr; }) : firData;
+    var myFirs = currentRole === 'citizen' ? firData.filter(function(f) { return f.complainant === currentUserStr && f.priority !== 'High'; }) : firData;
 
     var inv = myFirs.filter(function(f) { return f.status.includes('Investigation'); }).length;
     var res = myFirs.filter(function(f) { return f.status === 'Resolved' || f.status.includes('Close'); }).length;
@@ -470,7 +581,7 @@
     if(!container) return;
     
     var currentUserStr = (currentRole === 'citizen') ? document.getElementById('top-name').textContent : null;
-    var myFirs = currentRole === 'citizen' ? firData.filter(function(f) { return f.complainant === currentUserStr; }) : firData;
+    var myFirs = currentRole === 'citizen' ? firData.filter(function(f) { return f.complainant === currentUserStr && f.priority !== 'High'; }) : firData;
 
     container.innerHTML = '';
     if (myFirs.length === 0) {
@@ -491,7 +602,7 @@
     if(!tbody) return;
 
     var currentUserStr = (currentRole === 'citizen') ? document.getElementById('top-name').textContent : null;
-    var myFirs = currentRole === 'citizen' ? firData.filter(function(f) { return f.complainant === currentUserStr; }) : firData;
+    var myFirs = currentRole === 'citizen' ? firData.filter(function(f) { return f.complainant === currentUserStr && f.priority !== 'High'; }) : firData;
     
     var html = '';
     var displayFirs = [].concat(myFirs).reverse();
@@ -510,8 +621,18 @@
   }
 
   function viewFirDetail(id) {
+    window.location.hash = 'fir-detail/' + encodeURIComponent(id);
+  }
+
+  function renderFirDetail(id) {
     var found = firData.find(function(f) { return f.id === id; });
-    if (!found) return;
+    if (!found) return false;
+
+    if (currentRole === 'citizen' && found.priority === 'High') {
+      alert("Access Denied: High priority cases are restricted on the citizen dashboard.");
+      window.location.hash = 'dashboard';
+      return false;
+    }
 
     // Update screen-fir-detail title and subtitle
     var titleEl = document.getElementById('detail-title');
@@ -536,7 +657,7 @@
     if (compMobileEl) compMobileEl.textContent = found.mobile || 'N/A';
 
     var compAadhaarEl = document.getElementById('detail-comp-aadhaar');
-    if (compAadhaarEl) compAadhaarEl.textContent = found.aadhaar || 'XXXX-XXXX-XXXX';
+    if (compAadhaarEl) compAadhaarEl.textContent = found.aadhaar || 'XXXX-XXXX-3421';
 
     var compAddressEl = document.getElementById('detail-comp-address');
     if (compAddressEl) compAddressEl.textContent = found.address || 'N/A';
@@ -565,7 +686,11 @@
     var incDescEl = document.getElementById('detail-inc-desc');
     if (incDescEl) incDescEl.textContent = found.description || 'No description provided.';
 
-    showScreen('fir-detail', null);
+    var incPriorityEl = document.getElementById('detail-inc-priority');
+    if (incPriorityEl) {
+      incPriorityEl.textContent = found.priority || 'Medium';
+    }
+    return true;
   }
 
   function renderNotifications() {
@@ -708,14 +833,23 @@
   // ================= NyayaMitra AI Chat Assistant Functions =================
 
   function openAIChat() {
-    var screenLogin = document.getElementById('screen-login');
+    window.location.hash = 'ai-chat';
+  }
+
+  function openAIChatInternal() {
+    var topBar = document.getElementById('top-bar-main');
+    if (topBar) topBar.style.display = 'none';
+    var navTabs = document.getElementById('nav-tabs');
+    if (navTabs) navTabs.style.display = 'none';
+
+    document.querySelectorAll('.screen').forEach(function(s) {
+      s.classList.remove('active');
+      s.style.display = 'none';
+    });
+
     var screenAIChat = document.getElementById('screen-ai-chat');
     var launcher = document.getElementById('ai-chat-launcher');
     
-    if (screenLogin) {
-      screenLogin.classList.remove('active');
-      screenLogin.style.display = 'none';
-    }
     if (screenAIChat) {
       screenAIChat.classList.add('active');
       screenAIChat.style.display = 'block';
@@ -732,7 +866,10 @@
   }
 
   function closeAIChat() {
-    var screenLogin = document.getElementById('screen-login');
+    window.location.hash = isLoggedIn ? 'dashboard' : 'login';
+  }
+
+  function closeAIChatInternal() {
     var screenAIChat = document.getElementById('screen-ai-chat');
     var launcher = document.getElementById('ai-chat-launcher');
     
@@ -740,12 +877,30 @@
       screenAIChat.classList.remove('active');
       screenAIChat.style.display = 'none';
     }
-    if (screenLogin) {
-      screenLogin.classList.add('active');
-      screenLogin.style.display = 'block';
-    }
-    if (launcher) {
-      launcher.style.display = 'block';
+    
+    if (isLoggedIn) {
+      var topBar = document.getElementById('top-bar-main');
+      if (topBar) topBar.style.display = 'block';
+      var navTabs = document.getElementById('nav-tabs');
+      if (navTabs) navTabs.style.display = 'flex';
+      
+      var dashboardScreen = document.getElementById('screen-dashboard');
+      if (dashboardScreen) {
+        dashboardScreen.classList.add('active');
+        dashboardScreen.style.display = 'block';
+      }
+      if (launcher) {
+        launcher.style.display = (currentRole === 'citizen') ? 'block' : 'none';
+      }
+    } else {
+      var screenLogin = document.getElementById('screen-login');
+      if (screenLogin) {
+        screenLogin.classList.add('active');
+        screenLogin.style.display = 'block';
+      }
+      if (launcher) {
+        launcher.style.display = 'block';
+      }
     }
     
     // Close plus menu if open
@@ -975,3 +1130,88 @@
       inputEl.focus();
     }
   }
+
+  function findTabElement(name) {
+    if (name === 'dashboard') {
+      var tabs = document.querySelectorAll('.nav-tab');
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].textContent.trim().toLowerCase() === 'dashboard') {
+          return tabs[i];
+        }
+      }
+    }
+    return document.getElementById('tab-' + name);
+  }
+
+  function restoreSession() {
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+      var u = sessionStorage.getItem('currentUser');
+      var r = sessionStorage.getItem('currentRole');
+      if (u && r && registeredUsers[u]) {
+        isLoggedIn = true;
+        setupUserUI(u, r);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function handleRouting() {
+    var hash = window.location.hash || '#login';
+    var route = hash.replace(/^#\/?/, '');
+    
+    if (route.indexOf('fir-detail/') === 0) {
+      if (!isLoggedIn) {
+        window.location.hash = 'login';
+        return;
+      }
+      var firId = decodeURIComponent(route.substring('fir-detail/'.length));
+      var success = renderFirDetail(firId);
+      if (success) {
+        showScreenInternal('fir-detail', null);
+      } else {
+        alert("FIR not found.");
+        window.location.hash = 'dashboard';
+      }
+      return;
+    }
+
+    if (!isLoggedIn) {
+      if (route === 'ai-chat') {
+        openAIChatInternal();
+        return;
+      }
+      showLoginInternal();
+      if (window.location.hash !== '' && window.location.hash !== '#login') {
+        window.location.hash = 'login';
+      }
+      return;
+    }
+
+    if (route === 'login') {
+      logoutInternal();
+      return;
+    }
+
+    if (route === 'ai-chat') {
+      openAIChatInternal();
+      return;
+    }
+
+    var validScreens = ['dashboard', 'fir-list', 'file-fir', 'officers', 'analytics', 'notifications'];
+    if (validScreens.indexOf(route) !== -1) {
+      showScreenInternal(route, findTabElement(route));
+    } else {
+      window.location.hash = 'dashboard';
+    }
+  }
+
+  function toggleFaq(card) {
+    card.classList.toggle('active');
+  }
+
+  window.addEventListener('hashchange', handleRouting);
+  window.addEventListener('load', function() {
+    restoreSession();
+    handleRouting();
+  });
