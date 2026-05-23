@@ -345,7 +345,20 @@
     dId.style.display = 'none'; oId.style.display = 'none'; aId.style.display = 'none';
     if (cId) cId.style.display = 'none';
 
-    if (r === 'citizen') dId.style.display = 'block';
+    if (r === 'citizen') {
+      dId.style.display = 'block';
+      var greetingEl = document.getElementById('citizen-greeting');
+      if (greetingEl) {
+        greetingEl.style.opacity = '0';
+        greetingEl.style.transform = 'translateX(-25px)';
+        greetingEl.style.transition = 'none';
+        setTimeout(function() {
+          greetingEl.style.transition = 'opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+          greetingEl.style.opacity = '1';
+          greetingEl.style.transform = 'translateX(0)';
+        }, 50);
+      }
+    }
     else if (r === 'officer') oId.style.display = 'block';
     else if (r === 'court' && cId) cId.style.display = 'block';
     else aId.style.display = 'block';
