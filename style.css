@@ -753,12 +753,27 @@
     outline: none;
   }
   .role-tab-icon {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+  }
+  .role-tab-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke: #718096;
+    fill: none;
+    transition: stroke 0.2s ease, transform 0.2s ease;
+  }
+  .role-tab-btn:hover .role-tab-icon svg {
+    stroke: var(--primary-blue);
+    transform: translateY(-1px);
   }
   .role-tab-label {
     font-size: 9px;
     font-weight: 600;
     color: #555;
+    transition: color 0.2s ease;
   }
   .role-tab-btn:hover {
     background: rgba(255,255,255,0.6);
@@ -769,6 +784,29 @@
   }
   .role-tab-btn.selected .role-tab-label {
     color: var(--primary-blue);
+  }
+  /* Color theme mapping for selected state svg stroke */
+  #r-citizen.selected .role-tab-icon svg {
+    stroke: var(--primary-blue) !important;
+  }
+  #r-officer.selected .role-tab-icon svg {
+    stroke: #d35400 !important;
+  }
+  #r-court.selected .role-tab-icon svg {
+    stroke: #0b3d26 !important;
+  }
+  #r-admin.selected .role-tab-icon svg {
+    stroke: #4f46e5 !important;
+  }
+  /* Color theme mapping for selected state labels */
+  #r-officer.selected .role-tab-label {
+    color: #d35400 !important;
+  }
+  #r-court.selected .role-tab-label {
+    color: #0b3d26 !important;
+  }
+  #r-admin.selected .role-tab-label {
+    color: #4f46e5 !important;
   }
 
   /* Login Inputs Form */
@@ -2245,8 +2283,8 @@
     --text-muted: #4B5563 !important;
     --border: #E5E7EB !important;
     --white: #FFFFFF !important;
-    --gray: #F3F4F6 !important;
-    --surface: #F3F4F6 !important;
+    --gray: #FAF6ED !important;
+    --surface: #FAF6ED !important;
     --navy: #1E3A8A !important;
     --navy-light: #2563EB !important;
     --red: #DC2626 !important;
@@ -2255,7 +2293,7 @@
   }
 
   body.role-court #app {
-    background-color: #F8FAFC !important;
+    background-color: #faf6ed !important;
     background-image: none !important;
     min-height: 100vh;
   }
@@ -2264,18 +2302,26 @@
     background: transparent !important;
   }
 
-  /* Header / Navbar styled as Navy Blue */
+  /* Header / Navbar styled as Dark Green / Emerald with watermark */
   body.role-court .top-bar {
-    background: #1E3A8A !important;
-    border-bottom: 2px solid #152E72;
+    background-color: #0b3d26 !important;
+    background-image: linear-gradient(135deg, #0b3d26 0%, #082d1c 100%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 100 100' opacity='0.08'%3E%3Cpath d='M50 20v60M25 45h50M25 45l-10 25h20L25 45zM75 45l-10 25h20L75 45zM35 80h30' stroke='%23f39c12' stroke-width='2' fill='none'/%3E%3C/svg%3E") !important;
+    background-repeat: repeat-x !important;
+    background-position: center right !important;
+    border-bottom: 2px solid #051d12 !important;
+  }
+
+  /* Match logo background inside top-bar for court */
+  body.role-court .top-bar-inner svg path[fill="#1A2557"] {
+    fill: #0b3d26 !important;
   }
 
   body.role-court .nav-tabs {
-    background: #152E72 !important;
+    background: #062f1d !important;
   }
 
   body.role-court .nav-tab {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.75);
   }
 
   body.role-court .nav-tab:hover {
@@ -2285,46 +2331,165 @@
 
   body.role-court .nav-tab.active {
     color: #FFFFFF !important;
-    border-bottom-color: #2563EB !important;
+    border-bottom-color: #ffffff !important;
     font-weight: 600;
   }
 
   body.role-court .avatar {
-    background: #2563EB !important;
-    color: #FFFFFF !important;
+    background-image: url('judge_avatar.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    color: transparent !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   }
 
   /* Government Rich Footer override */
   body.role-court .portal-rich-footer {
-    background: #0F172A !important;
+    background: #0B1333 !important;
   }
 
   /* Styling for tables, cards, lists */
   body.role-court .fir-table th {
-    background: #F3F4F6 !important;
-    color: #4B5563 !important;
-    border-bottom: 1px solid #E5E7EB !important;
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    border-bottom: 1px solid #d1d5db !important;
+    font-weight: 600;
   }
 
   body.role-court .fir-table tr:hover td {
-    background: #F8FAFC !important;
+    background: #fdfbf7 !important;
   }
 
   body.role-court .form-input:focus,
   body.role-court .form-select:focus,
   body.role-court .form-textarea:focus,
   body.role-court .search-input:focus {
-    border-color: #2563EB !important;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+    border-color: #1e3a8a !important;
+    box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15) !important;
   }
 
-  /* Primary Buttons styled in Blue */
-  body.role-court .btn-primary {
-    background: #2563EB !important;
+  /* Primary Buttons styled in Navy/Blue */
+  body.role-court .btn-primary,
+  body.role-court .btn-navy {
+    background: #1e3a8a !important;
     color: #FFFFFF !important;
+    transition: background 0.15s ease;
   }
 
-  body.role-court .btn-primary:hover {
-    background: #1D4ED8 !important;
+  body.role-court .btn-primary:hover,
+  body.role-court .btn-navy:hover {
+    background: #1e40af !important;
+  }
+
+  /* Watermark for upcoming hearings card */
+  body.role-court #dash-court .two-col > .card:first-child {
+    position: relative;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' opacity='0.035'%3E%3Cpath d='M50 15v70M15 35h70M15 35l-10 25h20L15 35zm60 0l-10 25h20L75 35zM30 85h40M50 15c-5 0-10 4-10 10s5 10 10 10 10-4 10-10-5-10-10-10z' stroke='%231e3a8a' stroke-width='2' fill='none'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 200px !important;
+  }
+
+  /* Court Stat Row and Cards */
+  body.role-court .court-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 992px) {
+    body.role-court .court-stat-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 576px) {
+    body.role-court .court-stat-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  body.role-court .court-stat-card {
+    background: #ffffff !important;
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  body.role-court .court-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  body.role-court .card-active-cases {
+    border: 1.5px solid #a5d6a7 !important;
+  }
+  body.role-court .card-hearings-today {
+    border: 1.5px solid #ef9a9a !important;
+  }
+  body.role-court .card-pending-chargesheets {
+    border: 1.5px solid #ffb74d !important;
+  }
+  body.role-court .card-new-documents {
+    border: 1.5px solid #90caf9 !important;
+  }
+
+  body.role-court .court-stat-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  body.role-court .card-active-cases .court-stat-icon-wrap {
+    background: #e8f5e9 !important;
+  }
+  body.role-court .card-hearings-today .court-stat-icon-wrap {
+    background: #ffebee !important;
+  }
+  body.role-court .card-pending-chargesheets .court-stat-icon-wrap {
+    background: #fff8e1 !important;
+  }
+  body.role-court .card-new-documents .court-stat-icon-wrap {
+    background: #e3f2fd !important;
+  }
+
+  body.role-court .court-stat-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  body.role-court .court-stat-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  body.role-court .court-stat-num {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    font-family: 'Outfit', sans-serif;
+  }
+  
+  body.role-court .text-green { color: #2e7d32 !important; }
+  body.role-court .text-red { color: #c62828 !important; }
+  body.role-court .text-gold { color: #ef6c00 !important; }
+  body.role-court .text-blue { color: #1565c0 !important; }
+
+  body.role-court .court-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #4b5563 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
   }
 
